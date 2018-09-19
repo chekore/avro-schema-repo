@@ -19,11 +19,6 @@
 package org.apache.avro.repo.client;
 
 import java.util.ArrayList;
-import java.util.Collections;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.core.MediaType;
 
 import org.apache.avro.repo.Repository;
 import org.apache.avro.repo.RepositoryUtil;
@@ -38,6 +33,11 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.representation.Form;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.ws.rs.core.MediaType;
+
+
 /**
  * An Implementation of {@link Repository} that connects to a remote
  * RESTRepository over HTTP.<br/>
@@ -50,6 +50,9 @@ import com.sun.jersey.api.representation.Form;
  */
 public class RESTRepositoryClient implements Repository {
 
+  private static final String APPLICATION_SCHEMA_REGISTRY_JSON = "application/vnd.schemaregistry.v1+json";
+  private static final MediaType APPLICATION_SCHEMA_REGISTRY_JSON_TYPE =
+    new MediaType("application", "vnd.schemaregistry.v1+json");
   private WebResource webResource;
 
   @Inject
@@ -59,38 +62,39 @@ public class RESTRepositoryClient implements Repository {
 
   @Override
   public Subject register(String subject, String validatorClass) {
-    String path = subject;
     Form form = new Form();
     form.add("validator_class", validatorClass);
 
-    String regSubjectName = webResource.path(path).accept(MediaType.TEXT_PLAIN)
-        .type(MediaType.APPLICATION_FORM_URLENCODED).put(String.class, form);
+    String regSubjectName =
+      webResource.path(subject).accept(APPLICATION_SCHEMA_REGISTRY_JSON).type(MediaType.APPLICATION_FORM_URLENCODED)
+        .post(String.class, form);
 
-    RESTSubject sub = new RESTSubject(regSubjectName);
-    return sub;
+    return new RESTSubject(regSubjectName);
   }
 
   @Override
-  public Subject lookup(String subject) {
+  public Subject lookup(String subject)
+    throws Exception {
     RepositoryUtil.validateSchemaOrSubject(subject);
     try {//returns ok or exception if not found
-      webResource.path(subject).get(String.class);
+      webResource.path(subject).accept(APPLICATION_SCHEMA_REGISTRY_JSON).get(String.class);
       return new RESTSubject(subject);
     } catch (Exception e) {
-      return null;
+      throw new Exception(e);
     }
   }
 
   @Override
-  public Iterable<Subject> subjects() {
+  public Iterable<Subject> subjects()
+    throws Exception {
     ArrayList<Subject> subjectList = new ArrayList<Subject>();
     try {
-      String subjects = webResource.get(String.class);
+      String subjects = webResource.accept(APPLICATION_SCHEMA_REGISTRY_JSON).get(String.class);
       for (String subjName : RepositoryUtil.subjectNamesFromString(subjects)) {
         subjectList.add(new RESTSubject(subjName));
       }
     } catch (Exception e) {
-      //no op. return empty list anyways
+      throw new Exception(e);
     }
     return subjectList;
   }
@@ -102,7 +106,8 @@ public class RESTRepositoryClient implements Repository {
     }
 
     @Override
-    public SchemaEntry register(String schema) throws SchemaValidationException {
+    public SchemaEntry register(String schema)
+      throws SchemaValidationException {
       RepositoryUtil.validateSchemaOrSubject(schema);
 
       String path = getName() + "/register";
@@ -111,7 +116,7 @@ public class RESTRepositoryClient implements Repository {
 
     @Override
     public SchemaEntry registerIfLatest(String schema, SchemaEntry latest)
-        throws SchemaValidationException {
+      throws SchemaValidationException {
       RepositoryUtil.validateSchemaOrSubject(schema);
       String idStr = (latest == null) ? "" : latest.getId();
 
@@ -120,79 +125,82 @@ public class RESTRepositoryClient implements Repository {
     }
 
     private SchemaEntry handleRegisterRequest(String path, String schema)
-        throws SchemaValidationException {
+      throws SchemaValidationException {
       String schemaId;
       try {
-        schemaId = webResource.path(path).accept(MediaType.TEXT_PLAIN)
-            .type(MediaType.TEXT_PLAIN_TYPE).put(String.class, schema);
+        schemaId =
+          webResource.path(path).accept(APPLICATION_SCHEMA_REGISTRY_JSON).type(APPLICATION_SCHEMA_REGISTRY_JSON_TYPE)
+            .post(String.class, schema);
         return new SchemaEntry(schemaId, schema);
       } catch (UniformInterfaceException e) {
         ClientResponse cr = e.getResponse();
-        if (ClientResponse.Status.fromStatusCode(cr.getStatus()).equals(
-            ClientResponse.Status.FORBIDDEN)) {
+        if (ClientResponse.Status.fromStatusCode(cr.getStatus()).equals(ClientResponse.Status.FORBIDDEN)) {
           throw new SchemaValidationException("Invalid schema: " + schema);
         } else {
           //any other status should return null
           return null;
         }
       } catch (ClientHandlerException e) {
-        return null;
+        throw new ClientHandlerException(e);
       }
     }
 
     @Override
-    public SchemaEntry lookupBySchema(String schema) {
+    public SchemaEntry lookupBySchema(String schema)
+      throws Exception {
       RepositoryUtil.validateSchemaOrSubject(schema);
       String path = getName() + "/schema";
       try {
-        String schemaId = webResource.path(path).accept(MediaType.TEXT_PLAIN)
-            .type(MediaType.TEXT_PLAIN_TYPE).post(String.class, schema);
+        String schemaId =
+          webResource.path(path).accept(APPLICATION_SCHEMA_REGISTRY_JSON).type(APPLICATION_SCHEMA_REGISTRY_JSON_TYPE)
+            .post(String.class, schema);
         return new SchemaEntry(schemaId, schema);
       } catch (Exception e) {
-        return null;
+        throw new Exception(e);
       }
     }
 
     @Override
-    public SchemaEntry lookupById(String schemaId) {
+    public SchemaEntry lookupById(String schemaId)
+      throws Exception {
       RepositoryUtil.validateSchemaOrSubject(schemaId);
       String path = getName() + "/id/" + schemaId;
       try {
-        String schema = webResource.path(path).get(String.class);
+        String schema = webResource.path(path).accept(APPLICATION_SCHEMA_REGISTRY_JSON).get(String.class);
         return new SchemaEntry(schemaId, schema);
       } catch (Exception e) {
-        return null;
+        throw new Exception(e);
       }
     }
 
     @Override
-    public SchemaEntry latest() {
+    public SchemaEntry latest()
+      throws Exception {
       String path = getName() + "/latest";
       String entryStr;
       try {
-        entryStr = webResource.path(path).get(String.class);
+        entryStr = webResource.path(path).accept(APPLICATION_SCHEMA_REGISTRY_JSON).get(String.class);
         return new SchemaEntry(entryStr);
-      } catch (UniformInterfaceException e) {
-        return null;
+      } catch (UniformInterfaceException | ClientHandlerException e) {
+        throw new Exception(e);
       }
     }
 
     @Override
-    public Iterable<SchemaEntry> allEntries() {
+    public Iterable<SchemaEntry> allEntries()
+      throws Exception {
       String path = getName() + "/all";
       String entriesStr;
       try {
-        entriesStr = webResource.path(path).get(String.class);
+        entriesStr = webResource.path(path).accept(APPLICATION_SCHEMA_REGISTRY_JSON).get(String.class);
+        return schemaEntriesFromStr(entriesStr);
       } catch (Exception e) {
-        return Collections.emptyList();
+        throw new Exception(e);
       }
-      return schemaEntriesFromStr(entriesStr);
     }
 
     private Iterable<SchemaEntry> schemaEntriesFromStr(String entriesStr) {
       return RepositoryUtil.schemasFromString(entriesStr);
     }
-
   }
-
 }

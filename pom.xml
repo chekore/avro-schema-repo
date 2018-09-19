@@ -30,11 +30,11 @@
   <packaging>pom</packaging>
 
   <properties>
-     <jetty-8.version>8.1.8.v20121106</jetty-8.version>
+     <jetty-8.version>8.2.0.v20160908</jetty-8.version>
      <guice.version>3.0</guice.version>
-     <jersey.version>1.15</jersey.version>
+     <jersey.version>1.19.4</jersey.version>
      <junit.version>4.10</junit.version>
-     <slf4j.version>1.6.4</slf4j.version>
+     <slf4j.version>1.7.25</slf4j.version>
   </properties>
 
   <modules>
