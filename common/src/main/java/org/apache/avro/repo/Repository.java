@@ -46,13 +46,11 @@ public interface Repository {
    *          the subject name
    * @return The subject if it exists, null otherwise.
    */
-  Subject lookup(String subjectName)
-    throws Exception;
+  Subject lookup(String subjectName);
 
   /**
    * List all subjects. Does not return null.
    */
-  Iterable<Subject> subjects()
-    throws Exception;
+  Iterable<Subject> subjects();
 
 }

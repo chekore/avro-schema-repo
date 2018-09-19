@@ -124,8 +124,7 @@ public abstract class Subject {
    * @return The SchemaEntry of the schema or null if the schema is not
    *         registered
    */
-  public abstract SchemaEntry lookupBySchema(String schema)
-    throws Exception;
+  public abstract SchemaEntry lookupBySchema(String schema);
 
   /**
    * Lookup the {@link SchemaEntry} for the given subject by id. Since the
@@ -136,8 +135,7 @@ public abstract class Subject {
    * @return The SchemaEntry of the schema or null if no such schema is
    *         registered for the provided id
    */
-  public abstract SchemaEntry lookupById(String id)
-    throws Exception;
+  public abstract SchemaEntry lookupById(String id);
 
   /**
    * Lookup the most recently registered schema for the given subject. This
@@ -146,8 +144,7 @@ public abstract class Subject {
    * @return The {@link SchemaEntry} or null if no schema is registered with
    *         this subject
    */
-  public abstract SchemaEntry latest()
-    throws Exception;
+  public abstract SchemaEntry latest();
 
   /**
    * List the ids of schemas registered with the given subject, ordered from
@@ -157,8 +154,7 @@ public abstract class Subject {
    * @return the {@link SchemaEntry} objects in this subject, ordered from most
    *         recent to oldest.
    */
-  public abstract Iterable<SchemaEntry> allEntries()
-    throws Exception;
+  public abstract Iterable<SchemaEntry> allEntries();
 
   @Override
   public String toString() {

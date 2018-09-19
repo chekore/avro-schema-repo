@@ -20,25 +20,26 @@ package org.apache.avro.repo;
 
 import javax.inject.Inject;
 
+
 /**
  * CacheRepository is a {@link Repository} implementation that wraps another
  * {@link Repository} and acts as a write-through cache of {@link Subject}s and
  * schema to id mappings, shielding the inner {@link Repository} from repetitive
  * lookups.
- * 
+ *
  * CacheRepository can cache Subjects (which cannot be deleted) and returns an
  * implementation of {@link Subject} that caches schema to id mappings.
- * 
+ *
  * This cannot cache the entire list of subjects since the list is mutable.
  * Similarly, a cached subject cannot cache the list of schemas or the latest()
  * schema because those are mutable as well.
- * 
+ *
  */
 public class CacheRepository implements Repository {
 
   private final RepositoryCache cache;
   private final Repository repo;
-  
+
   /**
    * Create a caching repository that wraps the provided repository using the
    * cache provided
