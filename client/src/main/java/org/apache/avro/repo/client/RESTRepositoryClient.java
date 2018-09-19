@@ -27,6 +27,7 @@ import org.apache.avro.repo.SchemaEntry;
 import org.apache.avro.repo.SchemaValidationException;
 import org.apache.avro.repo.Subject;
 
+import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
@@ -37,6 +38,7 @@ import com.sun.jersey.api.representation.Form;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 
 /**
@@ -180,7 +182,7 @@ public class RESTRepositoryClient implements Repository {
       String entryStr;
       try {
         entryStr = webResource.path(path).accept(APPLICATION_SCHEMA_REGISTRY_JSON).get(String.class);
-        return new SchemaEntry(entryStr);
+        return new Gson().fromJson(entryStr, SchemaEntry.class);
       } catch (UniformInterfaceException | ClientHandlerException e) {
         System.err.println(e.getMessage());
         return null;
